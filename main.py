@@ -53,7 +53,7 @@ def parse_args():
     parser.add_argument('--test_id', type=int, required=True)
     parser.add_argument('--outdir', type=str, required=True)
     parser.add_argument('--seed', type=int, default=17)
-    parser.add_argument('--num_workers', type=int, default=7)
+    parser.add_argument('--num_workers', type=int, default=2)
 
     # optimizer
     parser.add_argument('--epochs', type=int, default=40)

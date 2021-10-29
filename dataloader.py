@@ -21,7 +21,7 @@ class MPIIGazeDataset(torch.utils.data.Dataset):
         self.gazes = torch.from_numpy(self.gazes)
 
     def __getitem__(self, index):
-        return self.images[index], self.poses[index], self.gazes[index]
+        return self.images[index].float(), self.poses[index].float(), self.gazes[index].float()
 
     def __len__(self):
         return self.length
@@ -41,9 +41,6 @@ def get_loader(dataset_dir, test_subject_id, batch_size, num_workers, use_gpu):
         if subject_id != test_subject_id
     ])
     test_dataset = MPIIGazeDataset(test_subject_id, dataset_dir)
-
-    assert len(train_dataset) == 42000
-    assert len(test_dataset) == 3000
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
