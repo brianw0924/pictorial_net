@@ -10,22 +10,26 @@ import logging
 import argparse
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim
 import torch.utils.data
 import torch.backends.cudnn
 import torchvision.utils
+import torchvision.transforms as transforms
 try:
     from tensorboardX import SummaryWriter
     is_tensorboard_available = True
 except Exception:
     is_tensorboard_available = False
 
-from dataloader import get_loader
+from dataloader import get_loader, get_loader_TEyeD
 
 torch.backends.cudnn.benchmark = True
+
 
 logging.basicConfig(
     format='[%(asctime)s %(name)s %(levelname)s] - %(message)s',
@@ -44,21 +48,21 @@ def str2bool(s):
     else:
         raise RuntimeError('Boolean value expected')
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--arch', type=str, required=True, choices=['lenet', 'resnet_preact', 'pictorial_net'])
-    parser.add_argument('--dataset', type=str, required=True)
+    parser.add_argument('--dataset', type=str, default="/home/brianw0924/hdd/processed_data")
     parser.add_argument('--test_id', type=int, required=True)
-    parser.add_argument('--outdir', type=str, required=True)
+    parser.add_argument('--outdir', type=str, default='./result')
     parser.add_argument('--seed', type=int, default=17)
-    parser.add_argument('--num_workers', type=int, default=2)
+    parser.add_argument('--num_workers', type=int, default=7)
+    parser.add_argument('--image_size', type=tuple, default=None)
 
     # optimizer
-    parser.add_argument('--epochs', type=int, default=40)
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--base_lr', type=float, default=0.01)
+    parser.add_argument('--epochs', type=int, default=25)
+    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--base_lr', type=float, default=1e-4)
     parser.add_argument('--weight_decay', type=float, default=1e-4)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--nesterov', type=str2bool, default=True)
@@ -83,54 +87,44 @@ def parse_args():
     args.milestones = json.loads(args.milestones)
 
     return args
-
-
-class AverageMeter(object):
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, num):
-        self.val = val
-        self.sum += val * num
-        self.count += num
-        self.avg = self.sum / self.count
-
         
-def convert_to_unit_vector(angles):
-    x = -torch.cos(angles[:, 0]) * torch.sin(angles[:, 1])
-    y = -torch.sin(angles[:, 0])
-    z = -torch.cos(angles[:, 1]) * torch.cos(angles[:, 1])
-    norm = torch.sqrt(x**2 + y**2 + z**2)
-    x /= norm
-    y /= norm
-    z /= norm
-    return x, y, z
+
+'''
+from user's view
+x: right
+y: down
+z: point to user from camera
+'''
+
+def vec2angle(gaze):
+    # gaze: (bs,x,y,z)
+    x, y, z = gaze[:,0], gaze[:, 1], gaze[:, 2]
+    pitch = torch.atan(y/z) * 180 / np.pi
+    yaw = torch.atan(x/z) * 180 / np.pi
+    pitch = torch.unsqueeze(pitch,dim=1)
+    yaw = torch.unsqueeze(yaw,dim=1)
+    return (torch.cat((pitch,yaw),dim=1))
+
+def pitch_loss(preds, labels):
+    criterion = nn.MSELoss(reduction='mean') # actually, default is already 'mean'
+    return criterion(preds[:,0], labels[:,0])
+
+def yaw_loss(preds, labels):
+    criterion = nn.MSELoss(reduction='mean') # actually, default is already 'mean'
+    return criterion(preds[:,1], labels[:,1])
 
 
-def compute_angle_error(preds, labels):
-    pred_x, pred_y, pred_z = convert_to_unit_vector(preds)
-    label_x, label_y, label_z = convert_to_unit_vector(labels)
-    angles = pred_x * label_x + pred_y * label_y + pred_z * label_z
-    return torch.acos(angles) * 180 / np.pi
-
-
-def train(epoch, model, optimizer, criterion, train_loader, config, writer):
+def train(epoch, model, optimizer, criterion, train_loader, config, writer, device):
     global global_step
 
     logger.info('Train {}'.format(epoch))
 
     model.train()
 
-    loss_meter = AverageMeter()
-    angle_error_meter = AverageMeter()
+    loss_list = []
+
     start = time.time()
-    for step, (images, poses, gazes) in enumerate(train_loader):
+    for step, (images, gazes) in enumerate(train_loader):
         global_step += 1
 
         if config['tensorboard_images'] and step == 0:
@@ -138,99 +132,94 @@ def train(epoch, model, optimizer, criterion, train_loader, config, writer):
                 images, normalize=True, scale_each=True)
             writer.add_image('Train/Image', image, epoch)
 
-        images = images.cuda()
-        poses = poses.cuda()
-        gazes = gazes.cuda()
-
         optimizer.zero_grad()
-
-        #outputs = model(images, poses)
-        outputs, gazemap = model(images)
-        loss = criterion(outputs, gazes)
+        outputs, gazemap = model(images.to(device))
+        loss = criterion(outputs, vec2angle(gazes).to(device))
         loss.backward()
-
         optimizer.step()
+        
+        loss_list.append(loss.item())
 
-        angle_error = compute_angle_error(outputs, gazes).mean()
-
-        num = images.size(0)
-        loss_meter.update(loss.item(), num)
-        angle_error_meter.update(angle_error.item(), num)
 
         if config['tensorboard']:
-            writer.add_scalar('Train/RunningLoss', loss_meter.val, global_step)
+            writer.add_scalar('Train/RunningLoss', loss.item(), global_step)
 
-        if step % 100 == 0:
+        if step % 1000 == 0:
             logger.info('Epoch {} Step {}/{} '
-                        'Loss {:.4f} ({:.4f}) '
-                        'AngleError {:.2f} ({:.2f})'.format(
+                        'Loss {:.4f}'.format(
                             epoch,
                             step,
                             len(train_loader),
-                            loss_meter.val,
-                            loss_meter.avg,
-                            angle_error_meter.val,
-                            angle_error_meter.avg,
+                            loss.item(),
                         ))
 
     elapsed = time.time() - start
-    logger.info('Elapsed {:.2f}'.format(elapsed))
+    # logger.info('Elapsed {:.2f}'.format(elapsed))
+
+    loss_avg = sum(loss_list) / len(loss_list)
 
     if config['tensorboard']:
-        writer.add_scalar('Train/Loss', loss_meter.avg, epoch)
-        writer.add_scalar('Train/AngleError', angle_error_meter.avg, epoch)
+        writer.add_scalar('Train/Loss', loss_avg, epoch)
         writer.add_scalar('Train/Time', elapsed, epoch)
 
+    print(f'Train: {loss_avg}')
 
-def test(epoch, model, criterion, test_loader, config, writer):
+    return loss_avg
+
+def test(epoch, model, criterion, test_loader, config, writer, device):
     logger.info('Test {}'.format(epoch))
 
     model.eval()
 
-    loss_meter = AverageMeter()
-    angle_error_meter = AverageMeter()
+    loss_list = []
+    pitch_loss_list = []
+    yaw_loss_list = []
     start = time.time()
-    for step, (images, poses, gazes) in enumerate(test_loader):
+    for step, (images, gazes) in enumerate(test_loader):
+        
         if config['tensorboard_images'] and epoch == 0 and step == 0:
             image = torchvision.utils.make_grid(
                 images, normalize=True, scale_each=True)
             writer.add_image('Test/Image', image, epoch)
 
-        images = images.cuda()
-        poses = poses.cuda()
-        gazes = gazes.cuda()
 
         with torch.no_grad():
-            #outputs = model(images, poses)
-            outputs, gazemap = model(images)
-        loss = criterion(outputs, gazes)
+            outputs, gazemap = model(images.to(device))
+        loss = criterion(outputs, vec2angle(gazes).to(device))
+        p_loss = pitch_loss(outputs, vec2angle(gazes).to(device))
+        y_loss = yaw_loss(outputs, vec2angle(gazes).to(device))
 
-        angle_error = compute_angle_error(outputs, gazes).mean()
+        loss_list.append(loss.item())
+        pitch_loss_list.append(p_loss.item())
+        yaw_loss_list.append(y_loss.item())
 
-        num = images.size(0)
-        loss_meter.update(loss.item(), num)
-        angle_error_meter.update(angle_error.item(), num)
 
-    logger.info('Epoch {} Loss {:.4f} AngleError {:.2f}'.format(
-        epoch, loss_meter.avg, angle_error_meter.avg))
+    loss_avg = sum(loss_list) / len(loss_list)
+    pitch_loss_avg = sum(pitch_loss_list) / len(pitch_loss_list)
+    yaw_loss_avg = sum(yaw_loss_list) / len(yaw_loss_list)
+    
+    logger.info('Epoch {} | Loss {:.4f} | Pitch loss {:.2f} | Yaw loss {:2f}'.format(
+        epoch, loss_avg, pitch_loss_avg, yaw_loss_avg))
 
     elapsed = time.time() - start
-    logger.info('Elapsed {:.2f}'.format(elapsed))
+    # logger.info('Elapsed {:.2f}'.format(elapsed))
 
     if config['tensorboard']:
         if epoch > 0:
-            writer.add_scalar('Test/Loss', loss_meter.avg, epoch)
-            writer.add_scalar('Test/AngleError', angle_error_meter.avg, epoch)
+            writer.add_scalar('Test/Loss', loss_avg, epoch)
         writer.add_scalar('Test/Time', elapsed, epoch)
 
     if config['tensorboard_parameters']:
         for name, param in model.named_parameters():
             writer.add_histogram(name, param, global_step)
 
-    return angle_error_meter.avg
+
+    return loss_avg, pitch_loss_avg, yaw_loss_avg
 
 
 def main():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f'device: {device}')
     args = parse_args()
     logger.info(json.dumps(vars(args), indent=2))
 
@@ -252,26 +241,32 @@ def main():
     with open(outpath, 'w') as fout:
         json.dump(vars(args), fout, indent=2)
 
-    # data loaders
-    train_loader, test_loader = get_loader(
-        args.dataset, args.test_id, args.batch_size, args.num_workers, True)
+    print("Preparing data ...")
 
-    # model
+    # TEyeD dataset
+    train_loader, test_loader = get_loader_TEyeD(
+        args.dataset, args.batch_size, args.num_workers, True)
+
+    # model & loss function
     module = importlib.import_module('models.{}'.format(args.arch))
     model = module.Model()
-    model.cuda()
+    model.to(device)
+    criterion = nn.MSELoss(reduction='mean') # actually, default is already 'mean'
 
-    criterion = nn.MSELoss(size_average=True)
-
+    # # SGD
     # optimizer
-    optimizer = torch.optim.SGD(
-        model.parameters(),
-        lr=args.base_lr,
-        momentum=args.momentum,
-        weight_decay=args.weight_decay,
-        nesterov=args.nesterov)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=args.milestones, gamma=args.lr_decay)
+    # optimizer = torch.optim.SGD(
+    #     model.parameters(),
+    #     lr=args.base_lr,
+    #     momentum=args.momentum,
+    #     weight_decay=args.weight_decay,
+    #     nesterov=args.nesterov)
+
+    # Adam
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=args.base_lr, weight_decay=args.weight_decay)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(
+    #     optimizer, milestones=args.milestones, gamma=args.lr_decay)
 
     config = {
         'tensorboard': args.tensorboard,
@@ -280,28 +275,51 @@ def main():
     }
 
     # run test before start training
-    test(0, model, criterion, test_loader, config, writer)
+    test(0, model, criterion, test_loader, config, writer, device)
+
+    plot_train_loss, plot_test_loss, plot_test_pitch_loss, plot_test_yaw_loss = [], [], [], []
 
     for epoch in range(1, args.epochs + 1):
-        scheduler.step()
 
-        train(epoch, model, optimizer, criterion, train_loader, config, writer)
-        angle_error = test(epoch, model, criterion, test_loader, config,
-                           writer)
+        # Training
+        train_loss = train(epoch, model, optimizer, criterion, train_loader, config, writer, device)
+        # scheduler.step()
+
+        # Testing / Validation
+        test_loss, test_pitch_loss, test_yaw_loss = test(
+            epoch, model, criterion, test_loader, config, writer, device)
+
+        plot_train_loss.append(train_loss)
+        plot_test_loss.append(train_loss)
+        plot_test_pitch_loss.append(test_pitch_loss)
+        plot_test_yaw_loss.append(test_yaw_loss)
 
         state = OrderedDict([
             ('args', vars(args)),
             ('state_dict', model.state_dict()),
             ('optimizer', optimizer.state_dict()),
             ('epoch', epoch),
-            ('angle_error', angle_error),
         ])
-        model_path = os.path.join(outdir, 'model_state.pth')
+        model_path = os.path.join(outdir, f'model_state_epoch{epoch}.pth')
         torch.save(state, model_path)
 
     if args.tensorboard:
         outpath = os.path.join(outdir, 'all_scalars.json')
         writer.export_scalars_to_json(outpath)
+
+    print(len(plot_train_loss))
+    print(plot_train_loss)
+    print(len(plot_test_loss))
+    print(plot_test_loss)
+    x = [i+1 for i in range(len(plot_train_loss))]
+    plt.plot(x,plot_train_loss,color='black',label='train')
+    plt.plot(x,plot_test_loss,color='blue',label='test')
+    plt.plot(x,plot_test_loss,color='green',label='test_pitch')
+    plt.plot(x,plot_test_loss,color='red',label='test_yaw')
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.savefig("Loss_Curve")
+    plt.clf()
 
 
 if __name__ == '__main__':

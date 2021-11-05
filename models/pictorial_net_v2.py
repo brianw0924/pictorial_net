@@ -11,8 +11,8 @@ from collections import OrderedDict
 
 
 # 7x7 convolution
-def conv7x7(in_channels, out_channels, stride=1):
-    return nn.Conv2d(in_channels, out_channels, kernel_size=7, stride=stride, padding=3, bias=False)
+def conv7x7(in_channels, out_channels, stride, padding):
+    return nn.Conv2d(in_channels, out_channels, kernel_size=7, stride=stride, padding=padding, bias=False)
 
 
 # 3x3 convolution
@@ -29,31 +29,29 @@ def conv1x1(in_channels, out_channels, stride=1):
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
         super(ResidualBlock, self).__init__()
-        self.conv1 = conv1x1(in_channels, 32)
-        self.bn1 = nn.BatchNorm2d(32)
+        self.conv1 = conv1x1(in_channels, out_channels/2)
+        self.bn1 = nn.BatchNorm2d(out_channels/2)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(32, 32, stride)
-        self.bn2 = nn.BatchNorm2d(32, 32)
-        self.conv3 = conv1x1(32, out_channels)
+        self.conv2 = conv3x3(out_channels/2, out_channels/2, stride=1)
+        self.bn2 = nn.BatchNorm2d(out_channels/2, out_channels/2)
+        self.conv3 = conv1x1(out_channels/2, out_channels)
         self.bn3 = nn.BatchNorm2d(out_channels, out_channels)
-        self.downsample = downsample
-        self.bn4 = nn.BatchNorm2d(out_channels, out_channels)
 
     def forward(self, x):
         residual = x
-        out = self.conv1(x)
-        out = self.bn1(out)
+        out = self.bn1(x)
         out = self.relu(out)
-        out = self.conv2(out)
+        out = self.conv1(out)
+
         out = self.bn2(out)
         out = self.relu(out)
-        out = self.conv3(out)
+        out = self.conv2(out)
+
         out = self.bn3(out)
-        if self.downsample:
-            residual = self.downsample(x)
-            residual = self.bn4(residual)
-        out += residual
         out = self.relu(out)
+        out = self.conv3(out)
+
+        out += residual
 
         return out
 
@@ -63,7 +61,7 @@ class Hourglass_half_scale(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super(Hourglass_half_scale, self).__init__()
 
-        self.conv1 =conv7x7(in_channels, 64, stride)
+        self.conv1 =conv7x7(in_channels, out_channels, stride=2, padding=3)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.residual_module1 = ResidualBlock(out_channels, out_channels)
@@ -73,6 +71,7 @@ class Hourglass_half_scale(nn.Module):
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
+        
         out = self.residual_module1(out)
         out = self.residual_module2(out)
 
