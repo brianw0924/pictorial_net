@@ -6,7 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
-# from .unet import UNet
+from .unet import UNet
+from .pose_net import PoseNet
 from collections import OrderedDict
 
 
@@ -288,17 +289,27 @@ class Model(nn.Module):
         out_channels = 64
         stride = 2
 
-        self.Hourglass_net = Hourglass_net(in_channels, out_channels, stride)
-        # self.UNet = UNet(n_channels=1, n_classes=64, bilinear=True)
+        # self.Hourglass_net = Hourglass_net(in_channels, out_channels, stride)
+        self.UNet = UNet(in_channels=1, out_channels=64, bilinear=True)
+        # self.PoseNet = PoseNet(nstack=1, inp_dim=256, oup_dim=64)
         self.DenseNet = DenseNet(num_init_features=out_channels, drop_rate=0.5)
 
     def forward(self, x):
-        y, gazemap = self.Hourglass_net(x)
-        # y, gazemap = self.UNet(x)
 
-        # print(y.shape, gazemap.shape)
+        # # Stacked Hourglass + Densenet
+        # y, gazemap = self.Hourglass_net(x)
+        # out = self.DenseNet(y)
+        # return out
+
+        # UNet + Densenet
+        y = self.UNet(x)
         out = self.DenseNet(y)
-        return out, gazemap
+        return out
+
+        # # PoseNet + Densenet
+        # y = self.PoseNet(x)
+        # out = self.DenseNet(y)
+        # return out, 0
 
 
 if __name__ == "__main__":

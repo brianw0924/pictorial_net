@@ -18,7 +18,7 @@ class UNet(nn.Module):
         self.out_channels = out_channels
         self.bilinear = bilinear
         
-        num = 64
+        num = out_channels
         self.inc = DoubleConv(in_channels, num)
         self.down1 = Down(num, num*2)
         self.down2 = Down(num*2 , num*4)
@@ -29,8 +29,7 @@ class UNet(nn.Module):
         self.up2 = Up(num*8 , num*4 // factor, bilinear)
         self.up3 = Up(num*4 , num*2 // factor, bilinear)
         self.up4 = Up(num*2 , num, bilinear)
-        
-        self.conv1x1 = conv1x1()
+        self.outc = OutConv(num, out_channels)
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -42,6 +41,7 @@ class UNet(nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
-        gazemap = 
 
-        return x, gazemap
+        out = self.outc(x)
+
+        return out
