@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 import numpy as np
 import random
+import os
+import json
+import matplotlib.pyplot as plt
+
 
 def Set_seed(seed):
     random.seed(seed)
@@ -58,3 +62,8 @@ def plot_curve(args, plot_train_loss, plot_train_pitch_loss, plot_train_yaw_loss
     plt.ylabel("Loss")
     plt.savefig(os.path.join(args.outdir,"Loss_Curve.png"))
     plt.clf()   
+
+def update_log(args, log: dict, train_or_test: str, epoch, loss, pitch_loss, yaw_loss):
+    log[train_or_test][epoch] = f'Loss {round(loss,3)} | Pitch loss {round(pitch_loss,3)} | Yaw loss {round(yaw_loss,3)}'
+    with open(os.path.join(args.outdir, 'training_log.json'),'w') as f:
+        json.dump(log, f, indent=2)

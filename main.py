@@ -19,7 +19,7 @@ import torchvision.models as models
 from collections import OrderedDict
 from tqdm import tqdm
 
-from utils import Set_seed, vec2angle, pitch_loss, yaw_loss, plot_curve
+from utils import Set_seed, vec2angle, pitch_loss, yaw_loss, plot_curve, update_log
 from dataloader import TEyeDDataset
 from dataloader import get_loader_TEyeD
 from models.mynet import Mynet 
@@ -27,9 +27,9 @@ from models.mynet import Mynet
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default="/home/brianw0924/hdd/processed_data")
-    parser.add_argument('--outdir', type=str, default='./result')
+    parser.add_argument('--outdir', type=str, default='./result/UNet_vgg16bn')
     parser.add_argument('--seed', type=int, default=17)
-    parser.add_argument('--num_workers', type=int, default=7)
+    parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--epochs', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--base_lr', type=float, default=1e-4)
@@ -123,7 +123,7 @@ def train_dynamic_loading(args, epoch, model, optimizer, criterion, dataset_dir,
     return loss_avg, pitch_loss_avg, yaw_loss_avg
 
 
-def train(epoch, model, optimizer, criterion, train_loader, device):
+def train(args, epoch, model, optimizer, criterion, train_loader, device, log):
     model.train()
 
     loss_list = []
@@ -158,17 +158,19 @@ def train(epoch, model, optimizer, criterion, train_loader, device):
                     pitch_loss_avg,
                     yaw_loss_avg
                 ))
+    
+    update_log(args, log, "Train", epoch, loss_avg, pitch_loss_avg, yaw_loss_avg)
 
     return loss_avg, pitch_loss_avg, yaw_loss_avg
 
-def test(epoch, model, criterion, test_loader, device):
+def test(args, epoch, model, criterion, test_loader, device, log):
     model.eval()
 
     loss_list = []
     pitch_loss_list = []
     yaw_loss_list = []
 
-    for step, (images, gazes) in enumerate(test_loader):
+    for step, (images, gazes) in enumerate(tqdm(test_loader)):
 
         with torch.no_grad():
             outputs = model(images.to(device))
@@ -197,6 +199,8 @@ def test(epoch, model, criterion, test_loader, device):
                     yaw_loss_avg
                 ))
 
+    update_log(args, log, "Test", epoch, loss_avg, pitch_loss_avg, yaw_loss_avg)
+
     return loss_avg, pitch_loss_avg, yaw_loss_avg
 
 def main():
@@ -204,6 +208,12 @@ def main():
     # DEVICE
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'device: {device}')
+
+    # TRAIN LOG
+    log = {
+        "Train":{},
+        "Test":{}
+    }
 
     # ARGUMENTS
     args = parse_args()
@@ -241,11 +251,13 @@ def main():
     plot_test_loss, plot_test_pitch_loss, plot_test_yaw_loss = [], [], []
 
     # TRAINING
-    test(0, model, criterion, test_loader, device) # first testing before training
+    test(args, 0, model, criterion, test_loader, device, log) # first testing before training
     for epoch in range(1, args.epochs + 1):
 
         # Training
-        train_loss, train_pitch_loss, train_yaw_loss = train(epoch, model, optimizer, criterion, train_loader, device)
+        train_loss, train_pitch_loss, train_yaw_loss = train(
+            args, epoch, model, optimizer, criterion, train_loader, device, log
+        )
         # train_loss, train_pitch_loss, train_yaw_loss = train_dynamic_loading(
         #     args, epoch, model, optimizer, criterion, args.dataset, device
         # )
@@ -253,7 +265,7 @@ def main():
 
         # Validation
         test_loss, test_pitch_loss, test_yaw_loss = test(
-            epoch, model, criterion, test_loader, device
+            args, epoch, model, criterion, test_loader, device, log
         )
 
         # Append loss for plotting
@@ -270,7 +282,7 @@ def main():
             ('state_dict', model.state_dict()),
             ('optimizer', optimizer.state_dict()),
         ])
-        torch.save(state, os.path.join(outdir, f'model_state_epoch{epoch}.pth'))
+        torch.save(state, os.path.join(args.outdir, f'model_state_epoch{epoch}.pth'))
 
         # Plot
         plot_curve(args, plot_train_loss, plot_train_pitch_loss, plot_train_yaw_loss, plot_test_loss, plot_test_pitch_loss, plot_test_yaw_loss)
