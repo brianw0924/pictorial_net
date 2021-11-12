@@ -1,5 +1,8 @@
 *png
+*mp4
 result/*
 MPIIGaze/*
 runs/*
+test_video/*
 training_log.md
+gaze_visualization.py

@@ -18,12 +18,14 @@ class TEyeDDataset(torch.utils.data.Dataset):
     def __init__(self, dataset_dir):
         with np.load(dataset_dir) as f:
             self.images = f['image']
-            self.gazes = f['gaze'][:,1:].astype(np.float32) # the first element is frame no.
+            self.gazes = f['gaze'][:,1:].astype(np.float32) # the first element of each row is frame no.
             valid = (self.gazes[:,0] != -1) # -1 means the eye is closed in this frame
             self.gazes = self.gazes[valid]
             self.images = self.images[valid]
-        self.length = len(self.images)
+
         assert(len(self.images) == len(self.gazes))
+        
+        self.length = len(self.images)
         self.gazes = torch.from_numpy(self.gazes)
 
     def __getitem__(self, index):
@@ -33,12 +35,17 @@ class TEyeDDataset(torch.utils.data.Dataset):
         return self.length
 
 def get_loader_TEyeD(dataset_dir, batch_size, num_workers, use_gpu):
-    assert os.path.exists(dataset_dir)
+    '''
+    dataset format : .npz
+    '''
     all_path = glob.glob(os.path.join(dataset_dir,"*"))
+
     train_dataset = torch.utils.data.ConcatDataset([
-        TEyeDDataset(path) for path in all_path[:20]
+        TEyeDDataset(path) for path in all_path[:25]
     ])
-    test_dataset = TEyeDDataset(all_path[-1])
+    test_dataset = torch.utils.data.ConcatDataset([
+        TEyeDDataset(path) for path in all_path[25:30]
+    ])
     print(f'train data len: {len(train_dataset)} | test data len: {len(test_dataset)}')
 
     train_loader = torch.utils.data.DataLoader(
