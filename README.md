@@ -1,3 +1,12 @@
+# How to run
+* Prepare TEyeD dataset
+* Change the path in Dikablis_preprocess.py
+* Run Dikablis_preprocess.py
+* Determine how much dataset you want to use in dataloader.py, which is depending on your RAM
+* Run main.py
+
+
+
 # Citation
 * https://arxiv.org/pdf/1807.10002.pdf
 * https://arxiv.org/abs/2102.02115
