@@ -49,12 +49,15 @@ if not os.path.exists(save_path):
 frame_per_video = args.fpv # only get first 1000 frame per video
 image_count = 0
 with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
-    with open(os.path.join(save_path,"landmark","landmark.txt"), 'w') as landmark:
+    with open(os.path.join(save_path,"landmark","iris_landmark.txt"), 'w') as landmark:
         for video_name in tqdm(video_list):
+            tqdm.write(video_name)
+            if video_name == "DikablisSS_10_1.mp4": # iris_lm_2D.txt is broken
+                continue
             '''
             image shape: (288, 384, 3)
             '''
-            tqdm.write(f'Video: {video_name}')
+            # tqdm.write(f'Video: {video_name}')
             video_full_path = os.path.join(video_path,video_name)
             video = cv2.VideoCapture(video_full_path)
             success = True
@@ -69,7 +72,7 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                 frame_id+=1
                 if frame_id == frame_per_video:
                     break
-
+            
             # Gaze vector
             text_full_path = os.path.join(label_path,f'{video_name}gaze_vec.txt')
             with open(text_full_path) as f:
@@ -79,8 +82,8 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                     if i+1 == frame_id:
                         break
 
-            # Gaze vector
-            text_full_path = os.path.join(label_path,f'{video_name}pupil_lm_2D.txt')
+            # lm
+            text_full_path = os.path.join(label_path,f'{video_name}iris_lm_2D.txt')
             with open(text_full_path) as f:
                 next(f)
                 for i, line in enumerate(f.readlines()):
