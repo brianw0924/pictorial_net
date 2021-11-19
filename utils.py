@@ -39,31 +39,31 @@ def pitch_loss(preds, labels):
     '''
     Root Mean Square Error
     '''
-    criterion = nn.MSELoss(reduction='mean')
-    return torch.sqrt(criterion(preds[:,0], labels[:,0]))
+    criterion = nn.L1Loss(reduction='sum')
+    return criterion(preds[:,0], labels[:,0])
 
 def yaw_loss(preds, labels):
     '''
     Root Mean Square Error
     '''
-    criterion = nn.MSELoss(reduction='mean')
-    return torch.sqrt(criterion(preds[:,1], labels[:,1]))
+    criterion = nn.L1Loss(reduction='sum')
+    return criterion(preds[:,1], labels[:,1])
 
-def plot_curve(args, plot_train_loss, plot_train_pitch_loss, plot_train_yaw_loss, plot_test_loss, plot_test_pitch_loss, plot_test_yaw_loss):
+def plot_curve(args, plot_train_loss, plot_train_pitch_loss, plot_train_yaw_loss, plot_val_loss, plot_val_pitch_loss, plot_val_yaw_loss):
     x = [i+1 for i in range(len(plot_train_loss))]
     plt.plot(x,plot_train_loss,color='navy',label='train(MSE)')
-    plt.plot(x,plot_train_pitch_loss,color='darkgreen',label='train_pitch(RMSE)')
-    plt.plot(x,plot_train_yaw_loss,color='darkred',label='train_yaw(RMSE)')
-    plt.plot(x,plot_test_loss,ls=':',color='navy',label='test(MSE)')
-    plt.plot(x,plot_test_pitch_loss,ls=':',color='darkgreen',label='test_pitch(RMSE)')
-    plt.plot(x,plot_test_yaw_loss,ls=':',color='darkred',label='test_yaw(RMSE)')
+    plt.plot(x,plot_train_pitch_loss,color='darkgreen',label='train_pitch(MAE)')
+    plt.plot(x,plot_train_yaw_loss,color='darkred',label='train_yaw(MAE)')
+    plt.plot(x,plot_val_loss,ls=':',color='navy',label='val(MSE)')
+    plt.plot(x,plot_val_pitch_loss,ls=':',color='darkgreen',label='val_pitch(MAE)')
+    plt.plot(x,plot_val_yaw_loss,ls=':',color='darkred',label='val_yaw(MAE)')
     plt.legend(loc='upper left')
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.savefig(os.path.join(args.outdir,"Loss_Curve.png"))
     plt.clf()   
 
-def update_log(args, log: dict, train_or_test: str, epoch, loss, pitch_loss, yaw_loss):
-    log[train_or_test][epoch] = f'Loss {round(loss,3)} | Pitch loss {round(pitch_loss,3)} | Yaw loss {round(yaw_loss,3)}'
+def update_log(args, log: dict, train_or_val: str, epoch, loss, pitch_loss, yaw_loss):
+    log[train_or_val][epoch] = f'Loss {round(loss,3)} | Pitch loss {round(pitch_loss,3)} | Yaw loss {round(yaw_loss,3)}'
     with open(os.path.join(args.outdir, 'training_log.json'),'w') as f:
         json.dump(log, f, indent=2)
