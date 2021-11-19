@@ -1,10 +1,19 @@
 # How to run
-* Prepare TEyeD dataset
-* Change the path in Dikablis_preprocess.py
-* Run Dikablis_preprocess.py
-* Determine how much dataset you want to use in dataloader.py, which is depending on your RAM
-* Run main.py
+Put TEyeD dataset directory at $PATH. The preprocessed data will be at $PATH/TEyeD
 
+    python Dikablis_preprocess_v2.py --root $PATH
+
+Training
+
+    python main.py --dataset $PATH/TEyeD
+
+or
+
+    python main.py --dataset $PATH/TEyeD --cross_target
+
+Visualization
+
+    python gaze_visualization --model_path $your_model.pth --video_dir $input_video_directory
 
 
 # Citation
