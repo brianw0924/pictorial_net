@@ -35,35 +35,35 @@ def vec2angle(gaze):
     yaw = torch.unsqueeze(yaw,dim=1)
     return (torch.cat((pitch,yaw),dim=1))
 
-def pitch_loss(preds, labels):
+def pitch_error(preds, labels):
     '''
-    Root Mean Square Error
+    Mean Absolute Error
     '''
     criterion = nn.L1Loss(reduction='sum')
     return criterion(preds[:,0], labels[:,0])
 
-def yaw_loss(preds, labels):
+def yaw_error(preds, labels):
     '''
-    Root Mean Square Error
+    Mean Absolute Error
     '''
     criterion = nn.L1Loss(reduction='sum')
     return criterion(preds[:,1], labels[:,1])
 
-def plot_curve(args, plot_train_loss, plot_train_pitch_loss, plot_train_yaw_loss, plot_val_loss, plot_val_pitch_loss, plot_val_yaw_loss):
+def plot_curve(args, plot_train_loss, plot_train_pitch_error, plot_train_yaw_error, plot_val_loss, plot_val_pitch_error, plot_val_yaw_error):
     x = [i+1 for i in range(len(plot_train_loss))]
     plt.plot(x,plot_train_loss,color='navy',label='train(MSE)')
-    plt.plot(x,plot_train_pitch_loss,color='darkgreen',label='train_pitch(MAE)')
-    plt.plot(x,plot_train_yaw_loss,color='darkred',label='train_yaw(MAE)')
+    plt.plot(x,plot_train_pitch_error,color='darkgreen',label='train_pitch(MAE)')
+    plt.plot(x,plot_train_yaw_error,color='darkred',label='train_yaw(MAE)')
     plt.plot(x,plot_val_loss,ls=':',color='navy',label='val(MSE)')
-    plt.plot(x,plot_val_pitch_loss,ls=':',color='darkgreen',label='val_pitch(MAE)')
-    plt.plot(x,plot_val_yaw_loss,ls=':',color='darkred',label='val_yaw(MAE)')
+    plt.plot(x,plot_val_pitch_error,ls=':',color='darkgreen',label='val_pitch(MAE)')
+    plt.plot(x,plot_val_yaw_error,ls=':',color='darkred',label='val_yaw(MAE)')
     plt.legend(loc='upper left')
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.savefig(os.path.join(args.outdir,"Loss_Curve.png"))
     plt.clf()   
 
-def update_log(args, log: dict, train_or_val: str, epoch, loss, pitch_loss, yaw_loss):
-    log[train_or_val][epoch] = f'Loss {round(loss,3)} | Pitch loss {round(pitch_loss,3)} | Yaw loss {round(yaw_loss,3)}'
+def update_log(args, log: dict, train_or_val: str, epoch, loss, pitch_error, yaw_error):
+    log[train_or_val][epoch] = f'Loss {round(loss,3)} | Pitch error {round(pitch_error,3)} | Yaw error {round(yaw_error,3)}'
     with open(os.path.join(args.outdir, 'training_log.json'),'w') as f:
         json.dump(log, f, indent=2)
