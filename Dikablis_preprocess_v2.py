@@ -26,9 +26,6 @@ args.root/TEyeD
             |   |-iris_landmark.txt
             |   |-lid_landmark.txt
             |
-            |-validity
-            |   |-validity.txt
-            |
             |-pupilsegmentation
             |   |-0000000.png
             |   |-0000001.png
@@ -91,7 +88,6 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
         with open(os.path.join(save_path,"landmark","iris_landmark.txt"), 'w') as i_landmark:
             with open(os.path.join(save_path,"landmark","lid_landmark.txt"), 'w') as l_landmark:
                 gaze.write("x,y,z\n")
-                validity.write("validity\n")
                 p_landmark.write("x,y,x,y, ...\n")
                 i_landmark.write("x,y,x,y, ...\n")
                 l_landmark.write("x,y,x,y, ...\n")
