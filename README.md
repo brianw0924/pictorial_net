@@ -5,13 +5,13 @@ Put TEyeD dataset directory at $PATH. The preprocessed data will be at $PATH/TEy
 
 Training
 
-    python main.py --dataset $PATH/TEyeD
+    python main_v2.py --dataset $PATH/TEyeD
 
 or
 
-    python main.py --dataset $PATH/TEyeD --cross_target
+    python main_v2.py --dataset $PATH/TEyeD --cross_target
 
-Visualization
+Visualization (have to crop the video by yourself currently.)
 
     python gaze_visualization --model_path $your_model.pth --video_dir $input_video_directory
 
