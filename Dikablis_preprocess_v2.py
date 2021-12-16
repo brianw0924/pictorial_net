@@ -119,9 +119,8 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                             break
 
                     # Gaze vector: FRAME;x;y;z;\n
-                    text_full_path = os.path.join(label_path,f'{video_name}gaze_vec.txt')
                     count = 0
-                    with open(text_full_path) as f:
+                    with open(os.path.join(label_path,f'{video_name}gaze_vec.txt')) as f:
                         next(f)
                         for i, line in enumerate(f.readlines()):
                             l = ','.join(line.split(';')[1:-1]) # x,y,z
@@ -133,9 +132,8 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                         tqdm.write(f'{video_name}gaze_vec.txt is broken.')
 
                     # pupil landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
-                    text_full_path = os.path.join(label_path,f'{video_name}pupil_lm_2D.txt')
                     count = 0
-                    with open(text_full_path) as f:
+                    with open(os.path.join(label_path,f'{video_name}pupil_lm_2D.txt')) as f:
                         next(f)
                         for i, line in enumerate(f.readlines()):
                             l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
@@ -147,9 +145,8 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                         tqdm.write(f'{video_name}pupil_lm_2D.txt is broken.')
 
                     # iris landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
-                    text_full_path = os.path.join(label_path,f'{video_name}iris_lm_2D.txt')
                     count = 0
-                    with open(text_full_path) as f:
+                    with open(os.path.join(label_path,f'{video_name}iris_lm_2D.txt')) as f:
                         next(f)
                         for i, line in enumerate(f.readlines()):
                             l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
@@ -161,9 +158,8 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                         tqdm.write(f'{video_name}iris_lm_2D.txt is broken.')
 
                     # lid landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
-                    text_full_path = os.path.join(label_path,f'{video_name}lid_lm_2D.txt')
                     count = 0
-                    with open(text_full_path) as f:
+                    with open(os.path.join(label_path,f'{video_name}lid_lm_2D.txt')) as f:
                         next(f)
                         for i, line in enumerate(f.readlines()):
                             l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
@@ -175,8 +171,7 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                         tqdm.write(f'{video_name}lid_lm_2D.txt is broken.')
 
                     # pupil 2D seg
-                    video_full_path = os.path.join(label_path,f'{video_name}pupil_seg_2D.mp4')
-                    video = cv2.VideoCapture(video_full_path)
+                    video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}pupil_seg_2D.mp4'))
                     success = True
                     count = 0
                     while(success):
@@ -197,8 +192,7 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                         
                         
                     # iris 2D seg
-                    video_full_path = os.path.join(label_path,f'{video_name}iris_seg_2D.mp4')
-                    video = cv2.VideoCapture(video_full_path)
+                    video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}iris_seg_2D.mp4'))
                     success = True
                     count = 0
                     while(success):
@@ -219,8 +213,7 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
 
 
                     # lid 2D seg   
-                    video_full_path = os.path.join(label_path,f'{video_name}lid_seg_2D.mp4')
-                    video = cv2.VideoCapture(video_full_path)
+                    video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}lid_seg_2D.mp4'))
                     success = True
                     count = 0
                     while(success):
