@@ -12,13 +12,13 @@ def conv1x1(in_channels, out_channels, stride=1):
 
 
 class UNet(nn.Module):
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels, out_channels, num, bilinear=True):
         super(UNet, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.bilinear = bilinear
         
-        num = out_channels
+        num = num
         self.inc = DoubleConv(in_channels, num)
         self.down1 = Down(num, num*2)
         self.down2 = Down(num*2 , num*4)
@@ -29,7 +29,7 @@ class UNet(nn.Module):
         self.up2 = Up(num*8 , num*4 // factor, bilinear)
         self.up3 = Up(num*4 , num*2 // factor, bilinear)
         self.up4 = Up(num*2 , num, bilinear)
-        self.outc = OutConv(num, out_channels)
+        self.outc = OutConv(num, self.out_channels)
 
     def forward(self, x):
         x1 = self.inc(x)
