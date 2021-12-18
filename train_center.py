@@ -92,9 +92,9 @@ def validation(args, step, model, val_loader, device, log):
         val_lid_center_loss    += lid_center_loss.item()
 
     val_loss               /= count
-    val_pupil_center_loss  /= count
-    val_iris_center_loss   /= count
-    val_lid_center_loss    /= count
+    val_pupil_center_loss   = math.sqrt(val_pupil_center_loss / count)
+    val_iris_center_loss    = math.sqrt(val_iris_center_loss / count)
+    val_lid_center_loss     = math.sqrt(val_lid_center_loss / count)
     
     tqdm.write( 'Validation  | '
                 'Step {} | '
@@ -104,9 +104,9 @@ def validation(args, step, model, val_loader, device, log):
                 'Lid center (RMSE) {:2f}'.format(
                     str(step).zfill(6),
                     val_loss,
-                    math.sqrt(val_pupil_center_loss),
-                    math.sqrt(val_iris_center_loss),
-                    math.sqrt(val_lid_center_loss)
+                    val_pupil_center_loss,
+                    val_iris_center_loss,
+                    val_lid_center_loss
                 ))
 
     update_log_lm(args, log, "Validation", step, val_loss, val_pupil_center_loss, val_iris_center_loss, val_lid_center_loss)
@@ -158,9 +158,9 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
             
             # TRAINING RECORD
             train_loss              /=  (args.val_steps / args.accumulate)
-            train_pupil_center_loss /=  args.val_steps
-            train_iris_center_loss  /=  args.val_steps
-            train_lid_center_loss   /=  args.val_steps
+            train_pupil_center_loss  = math.sqrt(train_pupil_center_loss / args.val_steps)
+            train_iris_center_loss   =  math.sqrt(train_iris_center_loss / args.val_steps)
+            train_lid_center_loss    =  math.sqrt(train_lid_center_loss / args.val_steps)
 
 
 
@@ -173,9 +173,9 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
                         'Lid center (RMSE) {:2f}'.format(
                             str(step).zfill(6),
                             train_loss,
-                            math.sqrt(train_pupil_center_loss),
-                            math.sqrt(train_iris_center_loss),
-                            math.sqrt(train_lid_center_loss)
+                            train_pupil_center_loss,
+                            train_iris_center_loss,
+                            train_lid_center_loss
                         ))
     
             update_log_lm(args, log, "Train", step+1, train_loss, train_pupil_center_loss, train_iris_center_loss, train_lid_center_loss)
