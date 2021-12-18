@@ -25,29 +25,31 @@ def vec2angle(gaze):
     x+: right
     y+: down
     z+: point to you
-    pitch+: z->y
-    yaw+: z->x
+    pitch+: up
+    yaw+: left(your pov) ; right (patient's pov)
     '''
+    if gaze[0].shape == torch.Size([2]): return gaze
+    
     x, y, z = gaze[:,0], gaze[:, 1], gaze[:, 2]
-    pitch = torch.atan(y/z) * 180 / np.pi
-    yaw = torch.atan(x/z) * 180 / np.pi
+    pitch = - torch.atan(y/z) * 180 / np.pi
+    yaw = - torch.atan(x/z) * 180 / np.pi
     pitch = torch.unsqueeze(pitch,dim=1)
     yaw = torch.unsqueeze(yaw,dim=1)
-    return (torch.cat((pitch,yaw),dim=1))
+    return (torch.cat((yaw,pitch),dim=1))
 
 def pitch_error(preds, labels):
     '''
     Mean Absolute Error
     '''
     criterion = nn.L1Loss(reduction='sum')
-    return criterion(preds[:,0], labels[:,0])
+    return criterion(preds[:,1], labels[:,1])
 
 def yaw_error(preds, labels):
     '''
     Mean Absolute Error
     '''
     criterion = nn.L1Loss(reduction='sum')
-    return criterion(preds[:,1], labels[:,1])
+    return criterion(preds[:,0], labels[:,0])
 
 def plot_curve(args, plot_train_loss, plot_train_pitch_error, plot_train_yaw_error, plot_val_loss, plot_val_pitch_error, plot_val_yaw_error):
     x = [i+1 for i in range(len(plot_train_loss))]
@@ -60,10 +62,16 @@ def plot_curve(args, plot_train_loss, plot_train_pitch_error, plot_train_yaw_err
     plt.legend(loc='upper left')
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
-    plt.savefig(os.path.join(args.outdir,"Loss_Curve.png"))
+    plt.savefig(os.path.join(args.out_dir,"Loss_Curve.png"))
     plt.clf()   
 
-def update_log(args, log: dict, train_or_val: str, epoch, loss, pitch_error, yaw_error):
-    log[train_or_val][epoch] = f'Loss {round(loss,3)} | Pitch error {round(pitch_error,3)} | Yaw error {round(yaw_error,3)}'
-    with open(os.path.join(args.outdir, 'training_log.json'),'w') as f:
+def update_log_gaze(args, log: dict, train_or_val: str, step, loss, pitch_error, yaw_error):
+    log[train_or_val][step] = f'Loss {round(loss,3)} | Pitch error {round(pitch_error,3)} | Yaw error {round(yaw_error,3)}'
+    with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
+        json.dump(log, f, indent=2)
+
+
+def update_log_lm(args, log: dict, train_or_val: str, step, loss, pupil_center_loss, iris_center_loss, lid_center_loss):
+    log[train_or_val][step] = f'Loss {round(loss,3)} | Pupil center loss {round(pupil_center_loss,3)} | Iris center loss {round(iris_center_loss,3)} | Lid center loss {round(lid_center_loss,3)}'
+    with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
         json.dump(log, f, indent=2)
