@@ -40,7 +40,7 @@ Suggestion:
     2. args.cross_target ?
 
 '''
-def preview(images, iris_lm):
+def preview(args, step, images, iris_lm):
     ims = []
     for b in range(images.shape[0]):
         p = iris_lm[b].cpu().detach().numpy()
@@ -54,7 +54,7 @@ def preview(images, iris_lm):
         image = torch.unsqueeze(image, dim=0)
         ims.append(image)
     ims = torch.cat(ims,dim=0)
-    save_image(ims, "preview.png", nrow=2)
+    save_image(ims, os.path.join(args.out_dir, f"preview{step}.png"), nrow=2)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -88,7 +88,7 @@ def validation(args, step, model, val_loader, device, log):
     for images, iris_lm in val_loader:
         with torch.no_grad():
             pred = model(images.to(device))
-        preview(images, pred)
+        preview(args, step, images, pred)
         break
 
     val_loss = 0
@@ -103,7 +103,7 @@ def validation(args, step, model, val_loader, device, log):
     
     tqdm.write( 'Validation  | '
                 'Step {} | '
-                'Iris center (RMSE) {:2f} | '.format(
+                'Iris center (RMSE) {:2f}'.format(
                     str(step).zfill(6),
                     val_loss,
                 ))
@@ -140,7 +140,7 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
-        
+
         if (step+1) % args.val_steps == 0:
             
             # TRAINING RECORD
@@ -170,8 +170,8 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
                 torch.save(state, os.path.join(args.out_dir, f'model_state.pth'))
                 error = val_loss
 
-            train_loss              = 0
-            count                   = 0
+            train_loss = 0
+            count      = 0
 
             model.train()
 
