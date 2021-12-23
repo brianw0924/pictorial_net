@@ -103,7 +103,7 @@ def validation(args, step, model, val_loader, device, log):
     
     tqdm.write( 'Validation  | '
                 'Step {} | '
-                'Iris center (RMSE) {:2f}'.format(
+                'Iris landmark (RMSE) {:2f}'.format(
                     str(step).zfill(6),
                     val_loss,
                 ))
@@ -148,7 +148,7 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
 
             tqdm.write( 'Train       | '
                         'Step {} | '
-                        'Iris center (RMSE) {:2f}'.format(
+                        'Iris landmark (RMSE) {:2f}'.format(
                             str(step).zfill(6),
                             train_loss,
                         ))
