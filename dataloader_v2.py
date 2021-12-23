@@ -78,9 +78,9 @@ class Center_dataset(data.Dataset):
         self.pupil_path = os.path.join(dataset_dir,"landmark","pupil_landmark.txt")
         self.iris_path = os.path.join(dataset_dir,"landmark","iris_landmark.txt")
         self.lid_path = os.path.join(dataset_dir,"landmark","lid_landmark.txt")
-        self.pupil_lm = []
-        self.iris_lm = []
-        self.lid_lm = []
+        self.pupil_center = []
+        self.iris_center = []
+        self.lid_center = []
 
         with open(self.pupil_path) as f:
             next(f)
@@ -88,7 +88,7 @@ class Center_dataset(data.Dataset):
                 line = line.strip().split(',')
                 px = torch.tensor([float(x) for x in line[::2]]).mean() / 2 # /2 because I resize to (144, 192)
                 py = torch.tensor([float(y) for y in line[1::2]]).mean() / 2
-                self.pupil_lm.append(torch.tensor((px,py)))
+                self.pupil_center.append(torch.tensor((px,py)))
 
         with open(self.iris_path) as f:
             next(f)
@@ -96,7 +96,7 @@ class Center_dataset(data.Dataset):
                 line = line.strip().split(',')
                 ix = torch.tensor([float(x) for x in line[::2]]).mean() / 2
                 iy = torch.tensor([float(y) for y in line[1::2]]).mean() / 2
-                self.iris_lm.append(torch.tensor((ix,iy)))
+                self.iris_center.append(torch.tensor((ix,iy)))
             
         with open(self.lid_path) as f:
             next(f)
@@ -104,27 +104,27 @@ class Center_dataset(data.Dataset):
                 line = line.strip().split(',')
                 lx = torch.tensor([float(x) for x in line[::2]]).mean() / 2
                 ly = torch.tensor([float(y) for y in line[1::2]]).mean() / 2
-                self.lid_lm.append(torch.tensor((lx,ly)))
+                self.lid_center.append(torch.tensor((lx,ly)))
 
-        assert(len(self.pupil_lm) == len(self.image_path) == len(self.iris_lm) == len(self.lid_lm))
+        assert(len(self.pupil_center) == len(self.image_path) == len(self.iris_center) == len(self.lid_center))
 
         # if cross-subject, split to train set & validation set
         if ratio:
             split = int(len(self.image_path)*ratio)
             if val:
                 self.image_path = self.image_path[split:]
-                self.pupil_lm = self.pupil_lm[split:]
-                self.iris_lm = self.iris_lm[split:]
-                self.lid_lm = self.lid_lm[split:]
+                self.pupil_center = self.pupil_center[split:]
+                self.iris_center = self.iris_center[split:]
+                self.lid_center = self.lid_center[split:]
             else:
                 self.image_path = self.image_path[:split]
-                self.pupil_lm = self.pupil_lm[:split]
-                self.iris_lm = self.iris_lm[:split]
-                self.lid_lm = self.lid_lm[:split]
+                self.pupil_center = self.pupil_center[:split]
+                self.iris_center = self.iris_center[:split]
+                self.lid_center = self.lid_center[:split]
 
     def __getitem__(self, index):
         image = Image.open(self.image_path[index])
-        return tfm(image),  self.pupil_lm[index], self.iris_lm[index], self.lid_lm[index]
+        return tfm(image),  self.pupil_center[index], self.iris_center[index], self.lid_center[index]
 
     def __len__(self):
         return len(self.image_path)
@@ -142,27 +142,59 @@ class Lid_2point_dataset(data.Dataset):
                 line = line.strip().split(',')
                 lx1, ly1 = float(line[0])/2, float(line[1])/2
                 lx2, ly2 = float(line[-2])/2, float(line[-1])/2
-                self.lid_lm.append(torch.tensor((lx1, ly1, lx2, ly2)))
+                self.lid_center.append(torch.tensor((lx1, ly1, lx2, ly2)))
 
-        assert(len(self.image_path) == len(self.lid_lm))
+        assert(len(self.image_path) == len(self.lid_center))
 
         # if cross-subject, split to train set & validation set
         if ratio:
             split = int(len(self.image_path)*ratio)
             if val:
                 self.image_path = self.image_path[split:]
-                self.lid_lm = self.lid_lm[split:]
+                self.lid_center = self.lid_center[split:]
             else:
                 self.image_path = self.image_path[:split]
-                self.lid_lm = self.lid_lm[:split]
+                self.lid_center = self.lid_center[:split]
 
     def __getitem__(self, index):
         image = Image.open(self.image_path[index])
-        return tfm(image),  self.lid_lm[index]
+        return tfm(image),  self.lid_center[index]
 
     def __len__(self):
         return len(self.image_path)
 
+class Iris_landmark_dataset(data.Dataset):
+
+    def __init__(self, dataset_dir, ratio=None, val=True):
+        self.image_path = sorted(glob.glob(os.path.join(dataset_dir,"image","*")))
+        self.iris_path = os.path.join(dataset_dir,"landmark","iris_landmark.txt")
+        self.iris_lm = []
+
+        with open(self.iris_path) as f:
+            next(f)
+            for line in f.readlines():
+                line = line.strip().split(',')
+                lm = torch.tensor([float(i)/2 for i in line])
+                self.iris_lm.append(lm)
+
+        assert(len(self.image_path) == len(self.iris_lm))
+
+        # if cross-subject, split to train set & validation set
+        if ratio:
+            split = int(len(self.image_path)*ratio)
+            if val:
+                self.image_path = self.image_path[split:]
+                self.iris_lm = self.iris_lm[split:]
+            else:
+                self.image_path = self.image_path[:split]
+                self.iris_lm = self.iris_lm[:split]
+
+    def __getitem__(self, index):
+        image = Image.open(self.image_path[index])
+        return tfm(image), self.iris_lm[index]
+
+    def __len__(self):
+        return len(self.image_path)
 
 
 def Gaze_loader(args):
@@ -200,6 +232,34 @@ def Center_loader(args):
         val_dataset  = Center_dataset(dataset_dir=args.data_dir, ratio=args.ratio, val=True)
     else:
         train_dataset = Center_dataset(dataset_dir=args.data_dir, ratio=None)
+        split_len = int(len(train_dataset) * args.ratio)
+        train_dataset, val_dataset = data.random_split(train_dataset, [split_len, len(train_dataset) - split_len])
+    
+    print(f'train data len: {len(train_dataset)} | validation data len: {len(val_dataset)}')
+
+    train_loader = data.DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=True,
+    )
+    val_loader = data.DataLoader(
+        val_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        shuffle=False,
+        pin_memory=True,
+    )
+    return train_loader, val_loader
+
+def Iris_landmark_loader(args):
+
+    if args.cross_target:
+        train_dataset = Iris_landmark_dataset(dataset_dir=args.data_dir, ratio=args.ratio, val=False)
+        val_dataset  = Iris_landmark_dataset(dataset_dir=args.data_dir, ratio=args.ratio, val=True)
+    else:
+        train_dataset = Iris_landmark_dataset(dataset_dir=args.data_dir, ratio=None)
         split_len = int(len(train_dataset) * args.ratio)
         train_dataset, val_dataset = data.random_split(train_dataset, [split_len, len(train_dataset) - split_len])
     

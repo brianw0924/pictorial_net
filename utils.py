@@ -71,7 +71,12 @@ def update_log_gaze(args, log: dict, train_or_val: str, step, loss, pitch_error,
         json.dump(log, f, indent=2)
 
 
-def update_log_lm(args, log: dict, train_or_val: str, step, loss, pupil_center_loss, iris_center_loss, lid_center_loss):
+def update_log_center(args, log: dict, train_or_val: str, step, loss, pupil_center_loss, iris_center_loss, lid_center_loss):
     log[train_or_val][step] = f'Loss {round(loss,3)} | Pupil center loss {round(pupil_center_loss,3)} | Iris center loss {round(iris_center_loss,3)} | Lid center loss {round(lid_center_loss,3)}'
+    with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
+        json.dump(log, f, indent=2)
+
+def update_log_iris_lm(args, log: dict, train_or_val: str, step, loss, iris_lm_loss):
+    log[train_or_val][step] = f'Iris lm loss {round(iris_lm_loss,3)}'
     with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
         json.dump(log, f, indent=2)
