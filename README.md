@@ -1,20 +1,15 @@
 # How to run
-Put TEyeD dataset directory at $PATH. The preprocessed data will be at $PATH/TEyeD
+Step 1: Build conda environment
+
+    source build_environment.sh $ENV_NAME
+
+Step 2: Put TEyeD dataset directory at $PATH. The preprocessed data will under $PATH/TEyeD
 
     python Dikablis_preprocess_v2.py --root $PATH
 
-Training
+Step 3: Training
 
-    python main_v2.py --dataset $PATH/TEyeD
-
-or
-
-    python main_v2.py --dataset $PATH/TEyeD --cross_target
-
-Visualization (have to crop the video by yourself currently.)
-
-    python gaze_visualization --model_path $your_model.pth --video_dir $input_video_directory
-
+    python train_gaze.py --dataset $PATH/TEyeD --cross_target
 
 # Citation
 * https://arxiv.org/pdf/1807.10002.pdf
