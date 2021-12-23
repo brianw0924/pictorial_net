@@ -25,10 +25,9 @@ from tqdm import tqdm
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from warmup_scheduler import GradualWarmupScheduler
 
-from utils import Set_seed, vec2angle, pitch_error, yaw_error, update_log_lm
+from utils import Set_seed, update_log_center
 from dataloader_v2 import Center_loader
 from models.mynet import Eye_Localization_Net
-from models.pictorial_net import Model
 
 '''
 [notes]
@@ -109,7 +108,7 @@ def validation(args, step, model, val_loader, device, log):
                     val_lid_center_loss
                 ))
 
-    update_log_lm(args, log, "Validation", step, val_loss, val_pupil_center_loss, val_iris_center_loss, val_lid_center_loss)
+    update_log_center(args, log, "Validation", step, val_loss, val_pupil_center_loss, val_iris_center_loss, val_lid_center_loss)
 
     return val_loss, val_pupil_center_loss, val_iris_center_loss, val_lid_center_loss
 
@@ -158,7 +157,7 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
             
             # TRAINING RECORD
             train_loss              /=  (args.val_steps / args.accumulate)
-            train_pupil_center_loss  = math.sqrt(train_pupil_center_loss / args.val_steps)
+            train_pupil_center_loss  =  math.sqrt(train_pupil_center_loss / args.val_steps)
             train_iris_center_loss   =  math.sqrt(train_iris_center_loss / args.val_steps)
             train_lid_center_loss    =  math.sqrt(train_lid_center_loss / args.val_steps)
 
@@ -178,7 +177,7 @@ def train(args, model, optimizer, scheduler, criterion, train_loader, val_loader
                             train_lid_center_loss
                         ))
     
-            update_log_lm(args, log, "Train", step+1, train_loss, train_pupil_center_loss, train_iris_center_loss, train_lid_center_loss)
+            update_log_center(args, log, "Train", step+1, train_loss, train_pupil_center_loss, train_iris_center_loss, train_lid_center_loss)
 
             # VALIDATION
             val_loss, val_pupil_center_loss, val_iris_center_loss, val_lid_center_loss = validation(
