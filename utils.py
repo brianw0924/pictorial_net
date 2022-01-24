@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 import random
+import math
 import os
 import json
 import matplotlib.pyplot as plt
-
+from tqdm import tqdm
 
 def Set_seed(seed):
     random.seed(seed)
@@ -19,7 +20,7 @@ def Set_seed(seed):
 
 def vec2angle(gaze):
     '''
-    gaze shape : (batchsize, x, y, z)
+    gaze shape : (batchsize, x, y, z) or (batchsize, yaw, pitch)
     
     * from your viewpoint *
     x+: right
@@ -28,8 +29,8 @@ def vec2angle(gaze):
     pitch+: up
     yaw+: left(your pov) ; right (patient's pov)
     '''
-    if gaze[0].shape == torch.Size([2]): return gaze
-    
+    if gaze[0].shape == torch.Size([2]): return gaze # label is already [yaw, pitch]
+
     x, y, z = gaze[:,0], gaze[:, 1], gaze[:, 2]
     pitch = - torch.atan(y/z) * 180 / np.pi
     yaw = - torch.atan(x/z) * 180 / np.pi
@@ -51,32 +52,13 @@ def yaw_error(preds, labels):
     criterion = nn.L1Loss(reduction='sum')
     return criterion(preds[:,0], labels[:,0])
 
-def plot_curve(args, plot_train_loss, plot_train_pitch_error, plot_train_yaw_error, plot_val_loss, plot_val_pitch_error, plot_val_yaw_error):
-    x = [i+1 for i in range(len(plot_train_loss))]
-    plt.plot(x,plot_train_loss,color='navy',label='train(MSE)')
-    plt.plot(x,plot_train_pitch_error,color='darkgreen',label='train_pitch(MAE)')
-    plt.plot(x,plot_train_yaw_error,color='darkred',label='train_yaw(MAE)')
-    plt.plot(x,plot_val_loss,ls=':',color='navy',label='val(MSE)')
-    plt.plot(x,plot_val_pitch_error,ls=':',color='darkgreen',label='val_pitch(MAE)')
-    plt.plot(x,plot_val_yaw_error,ls=':',color='darkred',label='val_yaw(MAE)')
-    plt.legend(loc='upper left')
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.savefig(os.path.join(args.out_dir,"Loss_Curve.png"))
-    plt.clf()   
-
-def update_log_gaze(args, log: dict, train_or_val: str, step, loss, pitch_error, yaw_error):
-    log[train_or_val][step] = f'Loss {round(loss,3)} | Pitch error {round(pitch_error,3)} | Yaw error {round(yaw_error,3)}'
+def update_log_gaze(args, log: dict, train_or_val: str, step, pitch_error, yaw_error):
+    log[train_or_val][step] = f'Pitch error {round(pitch_error,3)} | Yaw error {round(yaw_error,3)}'
     with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
         json.dump(log, f, indent=2)
 
-
-def update_log_center(args, log: dict, train_or_val: str, step, loss, pupil_center_loss, iris_center_loss, lid_center_loss):
-    log[train_or_val][step] = f'Loss {round(loss,3)} | Pupil center loss {round(pupil_center_loss,3)} | Iris center loss {round(iris_center_loss,3)} | Lid center loss {round(lid_center_loss,3)}'
+def update_log_valid(args, log: dict, train_or_val: str, step, sensitivity, specificity, score ):
+    log[train_or_val][step] = f'Sensitivity {sensitivity} | Specificity {specificity} | Score: {score}'
     with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
         json.dump(log, f, indent=2)
 
-def update_log_iris_lm(args, log: dict, train_or_val: str, step, loss, iris_lm_loss):
-    log[train_or_val][step] = f'Iris lm loss {round(iris_lm_loss,3)}'
-    with open(os.path.join(args.out_dir, 'training_log.json'),'w') as f:
-        json.dump(log, f, indent=2)
