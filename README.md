@@ -3,9 +3,9 @@ Step 1: Build conda environment
 
     source build_environment.sh $ENV_NAME
 
-Step 2: Put TEyeD dataset directory at $PATH. The preprocessed data will under $PATH/TEyeD
+Step 2: Put TEyeD dataset directory at $PATH. The preprocessed data will be under $PATH/TEyeD
 
-    python Dikablis_preprocess_v2.py --root $PATH
+    python Dikablis_preprocess.py --root $PATH
 
 Step 3: Training
 
