@@ -9,44 +9,22 @@ import argparse
 '''
 Only process on Dikablis dataset
 
-
 output directory tree will looks like this:
 
-args.root/TEyeD
-            |-image
-            |   |-0000000.png
-            |   |-0000001.png
-            |   ...
-            |
-            |-gaze
-            |   |-gaze.txt
-            |
-            |-landmark
-            |   |-pupil_landmark.txt
-            |   |-iris_landmark.txt
-            |   |-lid_landmark.txt
-            |
-            |-pupilsegmentation
-            |   |-0000000.png
-            |   |-0000001.png
-            |   ...
-            |
-            |-irissegmentation
-            |   |-0000000.png
-            |   |-0000001.png
-            |   ...
-            |
-            |-lidsegmentation
-            |   |-0000000.png
-            |   |-0000001.png
-            |   ...
-            ...
-
+args.root/
+        ├─20MioEyeDS/ (Original TEyeD dataset)
+        |   ├─CorruptFilesInZIP/
+        |   └─TEyeDSSingleFiles/
+        |       ├─Dikablis/
+        |       ├─...
+        |       ├─...
+        |
+        └─TEyeD/ (Will create this directory automatically)
 '''
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root', type=str, required=True, help='directory path before TEyeD')
-parser.add_argument('--fpv', type=int, default=3000, help='how many frame per video you want to store.')
+parser.add_argument('--root', type=str, required=True, help='Root directory')
+parser.add_argument('--fpv', type=int, default=3000, help='How many frame per video you want to store.')
 args = parser.parse_args()
 
 # ROOT
