@@ -1,5 +1,7 @@
 ## Setup environment
 
+You can change the pytorch, torchvision version (in build_environment.sh) to fit your GPU
+
     source build_environment.sh $ENV_NAME
 
 ## Data preprocessing (TEyeD dataset)
