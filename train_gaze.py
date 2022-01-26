@@ -38,6 +38,15 @@ from models.mynet import Gaze_Net
     2. args.dataset ?
     3. args.cross_subject ?
 
+
+args.data_dir/
+   ├─image/
+   |   ├─0000000.png
+   |   ├─0000001.png
+   |   ...
+   └─gaze/
+       └─gaze.txt
+
 '''
 
 def parse_args():
