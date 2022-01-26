@@ -14,7 +14,7 @@ Put TEyeD dataset directory at $PATH. The preprocessed data will be under $PATH/
 
 Please refer to the directory tree in Neurobit_data.py
 
-    python3 Neurobit_data.py --root --data_dir
+    python3 Neurobit_data.py --root $ROOT --data_dir $DATA_PATH
     
 ## Train gaze
 
@@ -23,6 +23,10 @@ Please refer to the directory tree in Neurobit_data.py
 ## Train validity
 
     python train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
+
+## Inference
+
+    python gaze_visualization.py --output_video $OUTPUT_PATH
 
 ## Citation
 * https://arxiv.org/pdf/1807.10002.pdf
