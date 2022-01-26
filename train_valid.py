@@ -53,7 +53,7 @@ def parse_args():
     ''' Paths '''
     parser.add_argument('--data_dir', type=str, default="/home/brianw0924/hdd/TEyeD")
     # parser.add_argument('--data_dir', type=str, default="/home/brianw0924/Desktop/Neurobit/dataset")
-    parser.add_argument('--dataset', type=str, default="Neurobit", choices=["Neurobit", "TEyeD"]) # if you set Neurobit, will do random cropping
+    parser.add_argument('--dataset', type=str, default="TEyeD", choices=["Neurobit", "TEyeD"]) # if you set Neurobit, will do random cropping
     parser.add_argument('--out_dir', type=str, default='./result/detect_eye_open/vgg19_bn_weighted02')
 
     ''' Load pretrain '''
