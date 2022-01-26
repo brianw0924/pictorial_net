@@ -43,9 +43,10 @@ from models.mynet import Gaze_Net
 def parse_args():
     parser = argparse.ArgumentParser()
     ''' Paths '''
-    parser.add_argument('--data_dir', type=str, default="/home/brianw0924/Desktop/Neurobit/dataset_nocrop")
     # parser.add_argument('--data_dir', type=str, default="/home/brianw0924/hdd/TEyeD")
-    parser.add_argument('--dataset', type=str, default="Neurobit")
+    # parser.add_argument('--dataset', type=str, default="TEyeD")
+    parser.add_argument('--data_dir', type=str, default="/home/brianw0924/Desktop/Neurobit/dataset_nocrop")
+    parser.add_argument('--dataset', type=str, default="Neurobit") # if you set Neurobit, will do random cropping
     parser.add_argument('--out_dir', type=str, default='./result/Neurobit/UNet16_vgg16bn_aug_roger_mixed')
     
     ''' Load pretrain '''
