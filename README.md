@@ -1,17 +1,28 @@
-# How to run
-Step 1: Build conda environment
+## Setup environment
 
     source build_environment.sh $ENV_NAME
 
-Step 2: Put TEyeD dataset directory at $PATH. The preprocessed data will be under $PATH/TEyeD
+## Data preprocessing (TEyeD dataset)
 
-    python Dikablis_preprocess.py --root $PATH
+Put TEyeD dataset directory at $PATH. The preprocessed data will be under $PATH/TEyeD
 
-Step 3: Training
+    python3 Dikablis_preprocess.py --root $PATH
 
-    python train_gaze.py --dataset $PATH/TEyeD --cross_target
+## Data preporcessing (Neurobit dataset)
 
-# Citation
+Please refer to the directory tree in Neurobit_data.py
+
+    python3 Neurobit_data.py --root --data_dir
+    
+## Train gaze
+
+    python train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
+
+## Train validity
+
+    python train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
+
+## Citation
 * https://arxiv.org/pdf/1807.10002.pdf
 * https://arxiv.org/abs/2102.02115
 * https://github.com/milesial/Pytorch-UNet
