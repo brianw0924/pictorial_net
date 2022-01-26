@@ -12,36 +12,36 @@ import random
 
 Please put the directory containing videos under righteye/ or lefteye/
 
-args.root
+args.root/
     |
-    |-processed
+    ├─processed/ (will be automatically created)
     |   |
-    |   |-image
-    |   |   |-0000000.png
-    |   |   |-0000001.png
+    |   ├─image/
+    |   |   ├─0000000.png
+    |   |   ├─0000001.png
     |   |   ...
-    |   |-gaze
-    |       |-gaze.txt
+    |   └─gaze/
+    |       └─gaze.txt
     |
-    |-raw
-        |-righteye
+    └─args.data_dir/ (please create by yourself)
+        ├─righteye
         |   |
-        |   |-2021xxxx_H14_NSS11111
-        |   |   |-0.mp4
-        |   |   |-1.mp4
-        |   |   |-2.mp4
+        |   ├─YYYYMMDD_H14_NSSxxxxx
+        |   |   ├─0.mp4
+        |   |   ├─1.mp4
+        |   |   ├─2.mp4
         |   |   ...
-        |   |-2021xxxx_H14_NSS11111
+        |   ├─YYYYMMDD_H14_NSSxxxxx
         |   ...
         |
-        |-lefteye
+        └─lefteye
             |
-            |-2021xxxx_H14_NSS00000
-            |   |-0.mp4
-            |   |-1.mp4
-            |   |-2.mp4
+            ├─YYYYMMDD_H14_NSSxxxxx
+            |   ├─0.mp4
+            |   ├─1.mp4
+            |   ├─2.mp4
             |   ...
-            |-2021xxxx_H14_NSS00000
+            ├─YYYYMMDD_H14_NSSxxxxx
             ...
 
 
@@ -71,6 +71,7 @@ def arg_parser():
 
     ''' Resume the last index'''
     parser.add_argument('--resume', action="store_true")
+    
     args = parser.parse_args()
 
     if not os.path.exists(os.path.join(args.root, args.out_dir)):
