@@ -31,21 +31,27 @@ from models.mynet import Gaze_Net
 0. Remember opencv is xy-indexing
 x: dim=1, i.e. column
 y: dim=0, i.e. row
+
+args.video_dir/
+    ├─video1.mp4
+    ├─video2.mp4
+    ├─ ...
+
 '''
 
 def parser_args():
     parser = argparse.ArgumentParser()
 
     # path
-    parser.add_argument('--gaze_model_path', type=str, default="./result/Neurobit/UNet16_vgg16bn_NOpretrain_aug_mixed/model_state.pth")
-    parser.add_argument('--valid_model_path', type=str, default="./result/detect_eye_open/vgg19_bn_weighted06/model_state.pth")
+    parser.add_argument('--gaze_model_path', type=str, default="./gaze.pth?dl=1")
+    parser.add_argument('--valid_model_path', type=str, default="./valid.pth?dl=1")
     parser.add_argument('--video_dir', type=str, default="./test_video")        # input
     parser.add_argument('--output_video', type=str, default='./test_result')    # output video
     parser.add_argument('--output_csv', type=str, default='./test_csv')         # output csv
 
     # parameter
-    parser.add_argument('--Lefteye_ROI', type=tuple, default=(0, 210, 800, 1080))     # (x, y) <=> (dim=1, dim=0) <=> (w, h)
-    parser.add_argument('--Righteye_ROI', type=tuple, default=(0, 210, 160, 440))     # (x, y) <=> (dim=1, dim=0) <=> (w, h)
+    parser.add_argument('--Lefteye_ROI', type=tuple, default=(50, 350, 760, 1160))     # (x, y) <=> (dim=1, dim=0) <=> (w, h)
+    parser.add_argument('--Righteye_ROI', type=tuple, default=(50, 350, 120, 520))     # (x, y) <=> (dim=1, dim=0) <=> (w, h)
     parser.add_argument('--fps', type=int, default=210)
     parser.add_argument('--seed', type=int, default=17)
     parser.add_argument('--threshold', type=float, default=0.5) # threshold for eye validity
@@ -130,8 +136,8 @@ def Inference_and_visualization(args, gaze_model, valid_model, device):
                     pred_valid[pred_valid>args.threshold]  = 1
                     pred_valid[pred_valid<=args.threshold] = 0
 
-                    lf.write(f"{pred[0,0]},{pred[0,1]},{pred_valid[0]}\n")
-                    rf.write(f"{pred[1,0]},{pred[1,1]},{pred_valid[1]}\n")
+                    lf.write(f"{pred[0,0]},{pred[0,1]},{pred_valid[0].item()}\n")
+                    rf.write(f"{pred[1,0]},{pred[1,1]},{pred_valid[1].item()}\n")
 
                     # Project to x-y
                     lx = - torch.sin(pred[0,0]*np.pi/180)
@@ -153,20 +159,13 @@ def Inference_and_visualization(args, gaze_model, valid_model, device):
                     Writer.write(two_eye)
 
             endtime = datetime.datetime.now()
-            tqdm.write(f'Spent time: {(endtime - starttime).seconds} | Frame count: {count}')
+            tqdm.write(f'Spent time: {(endtime - starttime).seconds} sec | Frame count: {count}')
 
 
 
 
 
 def main():
-
-    '''
-    video_dir/
-        ├─video1.mp4
-        ├─video2.mp4
-        ├─ ...
-    '''
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # device = 'cpu'
