@@ -1,3 +1,9 @@
+## Download Model
+
+Including gaze, valid, pretrained model
+
+    source download_model.sh
+
 ## Setup environment
 
 You can change the pytorch, torchvision version (in build_environment.sh) to fit your GPU
