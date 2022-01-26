@@ -40,13 +40,14 @@ save_path = os.path.join(root,"TEyeD")
 
 # OUTPUT DIR
 if not os.path.exists(save_path):
+    
     os.mkdir(save_path)
-    os.mkdir(save_path,"image")
-    os.mkdir(save_path,"gaze")
-    os.mkdir(save_path,"landmark")
-    os.mkdir(save_path,"pupilsegmentation")
-    os.mkdir(save_path,"irissegmentation")
-    os.mkdir(save_path,"lidsegmentation")
+    os.mkdir(os.path.join(save_path,"image"))
+    os.mkdir(os.path.join(save_path,"gaze"))
+    os.mkdir(os.path.join(save_path,"landmark"))
+    os.mkdir(os.path.join(save_path,"pupilsegmentation"))
+    os.mkdir(os.path.join(save_path,"irissegmentation"))
+    os.mkdir(os.path.join(save_path,"lidsegmentation"))
 
 # BROKEN FILE
 broken = []
@@ -109,103 +110,103 @@ with open(os.path.join(save_path,"gaze","gaze.txt"), 'w') as gaze:
                     if count != source_image_count:
                         tqdm.write(f'{video_name}gaze_vec.txt is broken.')
 
-                    # pupil landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
-                    count = 0
-                    with open(os.path.join(label_path,f'{video_name}pupil_lm_2D.txt')) as f:
-                        next(f)
-                        for i, line in enumerate(f.readlines()):
-                            l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
-                            p_landmark.write(f'{l}\n')  # x,y,x,y,x,y, ...\n
-                            count+=1
-                            if i+1 == source_image_count:
-                                break
-                    if count != source_image_count:
-                        tqdm.write(f'{video_name}pupil_lm_2D.txt is broken.')
+                    # # pupil landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
+                    # count = 0
+                    # with open(os.path.join(label_path,f'{video_name}pupil_lm_2D.txt')) as f:
+                    #     next(f)
+                    #     for i, line in enumerate(f.readlines()):
+                    #         l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
+                    #         p_landmark.write(f'{l}\n')  # x,y,x,y,x,y, ...\n
+                    #         count+=1
+                    #         if i+1 == source_image_count:
+                    #             break
+                    # if count != source_image_count:
+                    #     tqdm.write(f'{video_name}pupil_lm_2D.txt is broken.')
 
-                    # iris landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
-                    count = 0
-                    with open(os.path.join(label_path,f'{video_name}iris_lm_2D.txt')) as f:
-                        next(f)
-                        for i, line in enumerate(f.readlines()):
-                            l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
-                            i_landmark.write(f'{l}\n') # x,y,x,y,x,y, ...\n
-                            count+=1
-                            if i+1 == source_image_count:
-                                break
-                    if count != source_image_count:
-                        tqdm.write(f'{video_name}iris_lm_2D.txt is broken.')
+                    # # iris landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
+                    # count = 0
+                    # with open(os.path.join(label_path,f'{video_name}iris_lm_2D.txt')) as f:
+                    #     next(f)
+                    #     for i, line in enumerate(f.readlines()):
+                    #         l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
+                    #         i_landmark.write(f'{l}\n') # x,y,x,y,x,y, ...\n
+                    #         count+=1
+                    #         if i+1 == source_image_count:
+                    #             break
+                    # if count != source_image_count:
+                    #     tqdm.write(f'{video_name}iris_lm_2D.txt is broken.')
 
-                    # lid landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
-                    count = 0
-                    with open(os.path.join(label_path,f'{video_name}lid_lm_2D.txt')) as f:
-                        next(f)
-                        for i, line in enumerate(f.readlines()):
-                            l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
-                            l_landmark.write(f'{l}\n') # x,y,x,y,x,y, ...\n
-                            count+=1
-                            if i+1 == source_image_count:
-                                break
-                    if count != source_image_count:
-                        tqdm.write(f'{video_name}lid_lm_2D.txt is broken.')
+                    # # lid landmark: FRAME;AVG INACCURACY;x;y;x;y;...;\n
+                    # count = 0
+                    # with open(os.path.join(label_path,f'{video_name}lid_lm_2D.txt')) as f:
+                    #     next(f)
+                    #     for i, line in enumerate(f.readlines()):
+                    #         l = ','.join(line.split(';')[2:-1]) # x,y,x,y,x,y, ...
+                    #         l_landmark.write(f'{l}\n') # x,y,x,y,x,y, ...\n
+                    #         count+=1
+                    #         if i+1 == source_image_count:
+                    #             break
+                    # if count != source_image_count:
+                    #     tqdm.write(f'{video_name}lid_lm_2D.txt is broken.')
 
-                    # pupil 2D seg
-                    video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}pupil_seg_2D.mp4'))
-                    success = True
-                    count = 0
-                    while(success):
-                        success, frame = video.read()
-                        if not success:
-                            break
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        frame[frame<=128] = 0
-                        frame[frame>128] = 255
-                        im = Image.fromarray(frame)
-                        im.save(os.path.join(save_path,"pupilsegmentation",f'{str(pupil_seg_idx).zfill(7)}.png'))
-                        count+=1
-                        pupil_seg_idx+=1
-                        if count == source_image_count:
-                            break
-                    if count != source_image_count:
-                        tqdm.write(f'{video_name}pupil_seg_2D.mp4 is broken.')
+                    # # pupil 2D seg
+                    # video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}pupil_seg_2D.mp4'))
+                    # success = True
+                    # count = 0
+                    # while(success):
+                    #     success, frame = video.read()
+                    #     if not success:
+                    #         break
+                    #     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    #     frame[frame<=128] = 0
+                    #     frame[frame>128] = 255
+                    #     im = Image.fromarray(frame)
+                    #     im.save(os.path.join(save_path,"pupilsegmentation",f'{str(pupil_seg_idx).zfill(7)}.png'))
+                    #     count+=1
+                    #     pupil_seg_idx+=1
+                    #     if count == source_image_count:
+                    #         break
+                    # if count != source_image_count:
+                    #     tqdm.write(f'{video_name}pupil_seg_2D.mp4 is broken.')
                         
                         
-                    # iris 2D seg
-                    video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}iris_seg_2D.mp4'))
-                    success = True
-                    count = 0
-                    while(success):
-                        success, frame = video.read()
-                        if not success:
-                            break
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        frame[frame<=128] = 0
-                        frame[frame>128] = 255
-                        im = Image.fromarray(frame)
-                        im.save(os.path.join(save_path,"irissegmentation",f'{str(iris_seg_idx).zfill(7)}.png'))
-                        count+=1
-                        iris_seg_idx+=1
-                        if count == source_image_count:
-                            break
-                    if count != source_image_count:
-                        tqdm.write(f'{video_name}iris_seg_2D.mp4 is broken.')
+                    # # iris 2D seg
+                    # video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}iris_seg_2D.mp4'))
+                    # success = True
+                    # count = 0
+                    # while(success):
+                    #     success, frame = video.read()
+                    #     if not success:
+                    #         break
+                    #     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    #     frame[frame<=128] = 0
+                    #     frame[frame>128] = 255
+                    #     im = Image.fromarray(frame)
+                    #     im.save(os.path.join(save_path,"irissegmentation",f'{str(iris_seg_idx).zfill(7)}.png'))
+                    #     count+=1
+                    #     iris_seg_idx+=1
+                    #     if count == source_image_count:
+                    #         break
+                    # if count != source_image_count:
+                    #     tqdm.write(f'{video_name}iris_seg_2D.mp4 is broken.')
 
 
-                    # lid 2D seg   
-                    video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}lid_seg_2D.mp4'))
-                    success = True
-                    count = 0
-                    while(success):
-                        success, frame = video.read()
-                        if not success:
-                            break
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        frame[frame<=128] = 0
-                        frame[frame>128] = 255
-                        im = Image.fromarray(frame)
-                        im.save(os.path.join(save_path,"lidsegmentation",f'{str(lid_seg_idx).zfill(7)}.png'))
-                        count+=1
-                        lid_seg_idx+=1
-                        if count == source_image_count:
-                            break
-                    if count != source_image_count:
-                        tqdm.write(f'{video_name}lid_seg_2D.mp4 is broken.')
+                    # # lid 2D seg   
+                    # video = cv2.VideoCapture(os.path.join(label_path,f'{video_name}lid_seg_2D.mp4'))
+                    # success = True
+                    # count = 0
+                    # while(success):
+                    #     success, frame = video.read()
+                    #     if not success:
+                    #         break
+                    #     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    #     frame[frame<=128] = 0
+                    #     frame[frame>128] = 255
+                    #     im = Image.fromarray(frame)
+                    #     im.save(os.path.join(save_path,"lidsegmentation",f'{str(lid_seg_idx).zfill(7)}.png'))
+                    #     count+=1
+                    #     lid_seg_idx+=1
+                    #     if count == source_image_count:
+                    #         break
+                    # if count != source_image_count:
+                    #     tqdm.write(f'{video_name}lid_seg_2D.mp4 is broken.')
