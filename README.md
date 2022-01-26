@@ -9,7 +9,9 @@ Put TEyeD dataset directory at $PATH. The preprocessed data will be under $PATH/
     python3 Dikablis_preprocess.py --root $PATH
 
 ## Data preporcessing (Neurobit dataset)
-    
+
+Please refer to the directory tree in Neurobit_data.py
+
     python3 Neurobit_data.py --root --data_dir
     
 ## Train gaze
