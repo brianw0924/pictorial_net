@@ -18,15 +18,15 @@ Please refer to the directory tree in Neurobit_data.py
     
 ## Train gaze
 
-    python train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
+    python3 train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
 
 ## Train validity
 
-    python train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
+    python3 train_gaze.py --data_dir $PATH/TEyeD --dataset TEyeD
 
 ## Inference
 
-    python gaze_visualization.py --output_video $OUTPUT_PATH
+    python3 gaze_visualization.py --output_video $OUTPUT_PATH
 
 ## Citation
 * https://arxiv.org/pdf/1807.10002.pdf
