@@ -54,7 +54,7 @@ def parse_args():
     parser.add_argument('--data_dir', type=str, default="/home/brianw0924/hdd/TEyeD")
     # parser.add_argument('--data_dir', type=str, default="/home/brianw0924/Desktop/Neurobit/dataset")
     parser.add_argument('--dataset', type=str, default="TEyeD", choices=["Neurobit", "TEyeD"]) # if you set Neurobit, will do random cropping
-    parser.add_argument('--out_dir', type=str, default='./result/detect_eye_open/vgg19_bn_weighted02')
+    parser.add_argument('--out_dir', type=str, default='./result')
 
     ''' Load pretrain '''
     # parser.add_argument('--pretrain', type=str, default='./result/gaze/UNet16_vgg16bn_pretrain/model_state.pth')
